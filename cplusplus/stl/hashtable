@@ -1,0 +1,477 @@
+#ifndef HASHTABLE_H
+#define HASHTABLE_H
+#include <vector>
+static const int __stl_num_primes = 28;//表格大小(28个质数)
+//28个质数
+static const unsigned long __stl_prime_list[__stl_num_primes] =
+{
+    53,         97,           193,         389,       769,
+    1543,       3079,         6151,        12289,     24593,
+    49157,      98317,        196613,      393241,    786433,
+    1572869,    3145739,      6291469,     12582917,  25165843,
+    50331653,   100663319,    201326611,   402653189, 805306457,
+    1610612741, 3221225473ul, 4294967291ul
+};
+
+//得出28个质数中不小于n的那个质数
+inline unsigned long __get_next_prime(unsigned long n)
+{
+    const unsigned long *first = __stl_prime_list;
+    const unsigned long *last = __stl_prime_list + __stl_num_primes;
+    const unsigned long *pos = std::lower_bound(first,last,n);
+
+    return pos == last ? *(last - 1) : *pos;
+}
+
+//hash table中链表节点数据结构定义
+template <class ValueType>
+struct __hashtable_nodes
+{
+    __hashtable_nodes* next;
+    ValueType val;
+};
+
+//hashtable的前向声明
+template <class Value, class Key,
+         class HashFcn, class ExtractKey,
+         class EqualKey, class Alloc >
+class hashtable;
+
+template <class Value, class Key,
+         class HashFcn, class ExtractKey,
+         class EqualKey, class Alloc>
+struct __hashtable_iterator
+{
+    typedef hashtable<Value, Key, HashFcn, ExtractKey, EqualKey, Alloc> HashTable;
+    typedef __hashtable_iterator<Value, Key,
+            HashFcn, ExtractKey,
+            EqualKey, Alloc>
+            iterator;
+    typedef __hashtable_iterator<const Value, Key,
+            HashFcn, ExtractKey,
+            EqualKey, Alloc>
+            const_iterator;
+
+    typedef __hashtable_nodes<Value> node;
+
+    //因为是前向移动，没有后退操作--
+    typedef forward_iterator_tag    iterator_categor;
+    typedef Value                   value_type;
+    typedef ptrdiff_t               difference_type;
+    typedef size_t                  size_type;
+    typedef Value*                  pointer;
+    typedef Value&                  reference;
+
+    node* cur;
+    HashTable* ht;
+
+    //constructor
+    __hashtable_iterator(node* n, HashTable* tab) : cur(n), ht(tab) {}
+    __hashtable_iterator() {}
+
+    reference operator*()  const
+    {
+        return cur->val;
+    }
+    pointer   operator->() const
+    {
+        return &(operator*());
+    }
+    iterator& operator++();
+    iterator  operator++(int);
+    bool operator==(const iterator& it) const
+    {
+        return cur == it.cur;
+    }
+    bool operator!=(const iterator& it) const
+    {
+        return cur != it.cur;
+    }
+};
+
+template <class Value, class Key,
+         class HashFcn, class ExtractKey,
+         class EqualKey, class Alloc >
+inline __hashtable_iterator<Value, Key, HashFcn, ExtractKey, EqualKey, Alloc>&
+__hashtable_iterator<Value, Key, HashFcn, ExtractKey, EqualKey, Alloc>::operator++()
+{
+    const node * old = cur;
+    cur = cur->next;
+    //若该链到头了，那么就根据old的值定位出下个链行。
+    if(!cur)
+    {
+        size_type bucket = ht->bkt_num(old->val);
+        //找到下个不为空的链的头部
+        while (!cur &&
+               ++bucket < ht->getBuckets().size() )
+            cur = ht->getBuckets()[bucket];
+    }
+    return *this;
+}
+
+template <class Value, class Key,
+         class HashFcn, class ExtractKey,
+         class EqualKey, class Alloc>
+inline __hashtable_iterator<Value, Key, HashFcn, ExtractKey, EqualKey, Alloc>
+__hashtable_iterator<Value, Key, HashFcn, ExtractKey, EqualKey, Alloc>::operator++(int)
+{
+    iterator tmp = *this;
+    ++*this;
+    return tmp;
+}
+
+//hashtable的数据结构
+template <class Value, class Key,
+         class HashFcn, class ExtractKey,
+         class EqualKey, class Alloc>
+class hashtable
+{
+public:
+    typedef Value value_type;
+    typedef value_type* pointer;
+    typedef const pointer const_pointer;
+    typedef value_type& reference;
+    typedef const reference const_reference;
+    typedef Key key_type;
+    typedef HashFcn hasher;
+    typedef EqualKey key_equal;
+    typedef size_t size_type;
+    typedef __hashtable_iterator<Value, Key, HashFcn, ExtractKey, EqualKey, Alloc> iterator;
+    typedef typename __hashtable_iterator<Value, Key, HashFcn, ExtractKey, EqualKey, Alloc>::const_iterator const_iterator;
+//constructor
+public:
+    hashtable(size_type n,
+              const HashFcn &hf,
+              const EqualKey &eql,
+              const ExtractKey &ext)
+        :hash(hf),equals(eql),get_key(ext),num_elements(0)
+    {
+        initialize_buckets(n);
+    }
+
+    hashtable(size_type n,
+              const HashFcn &hf,
+              const EqualKey &eql)
+        :hash(hf),equals(eql),get_key(ExtractKey()),num_elements(0)
+    {
+        initialize_buckets(n);
+    }
+
+    hashtable(const hashtable &ht)
+        :hash(ht.hash),equals(ht.equals),get_key(ht.get_key),num_elements(0)
+    {
+        copy_from(&ht);
+    }
+
+    ~hashtable()
+    {
+        clear();
+    };
+
+    hashtable& operator= (const hashtable &ht)
+    {
+        if (&ht != this)
+        {
+            clear();
+            hash = ht.hash;
+            equals = ht.equals;
+            get_key = ht.get_key;
+            copy_from(&ht);
+        }
+    }
+private:
+    hasher hash;
+    key_equal equals;
+    ExtractKey get_key;
+
+    typedef __hashtable_nodes<Value> node;
+    typedef simple_alloc<node, Alloc> node_allocator;
+
+    //std::vector<node*, Alloc> buckets;
+    std::vector<node*> buckets;
+    size_type num_elements;
+public:
+    std::vector<node*> getBuckets() { return buckets;}
+    //返回bucket vector大小
+    size_type bucket_count() const
+    {
+        return buckets.size();
+    }
+    //返回bucket vector可能的最大值
+    size_type max_bucket_count()
+    {
+        return __stl_prime_list[__stl_num_primes - 1];
+    }
+    //返回元素个数
+    size_type size()
+    {
+        return num_elements;
+    }
+    //找到起始节点
+    iterator begin()
+    {
+        size_type bucketIndex = 0;
+        node* first;
+        for (first = buckets[bucketIndex];
+                !first && ++bucketIndex < buckets.size();
+                first = buckets[bucketIndex]) {}
+        return iterator(first, this);
+    }
+    //插入元素，不允许重复
+    std::pair<iterator, bool> insert_unique(const Value& obj)
+    {
+        resize(num_elements + 1);
+        return insert_unique_noresize(obj);
+    }
+    //插入元素，允许重复
+    iterator insert_equal(const Value& obj)
+    {
+        resize(num_elements + 1);
+        return insert_equal_noresize(obj);
+    }
+    //查找某一键值的节点
+    iterator find(const Key& key)
+    {
+        size_type bucketIndex = bkt_num_key(key);
+        node* first;
+        for ( first = buckets[bucketIndex];
+                first && !equals(get_key(first->val), key);
+                first = first->next) {}
+        return iterator(first, this);
+    }
+    //判断某一值出现的次数
+    size_type count(const Key& key)
+    {
+        const size_type bucketIndex = bkt_num_key(key);
+        size_type result = 0;
+        for (const node* cur = buckets[bucketIndex];
+                cur;
+                cur = cur->next)
+            if (equals(get_key(cur->val), key))
+                ++result;
+        return result;
+    }
+    //判断元素落在哪个bucket
+    //提供两个版本
+    //版本一：只接受实值
+    size_type bkt_num(const Value& obj) const
+    {
+        return bkt_num_key(get_key(obj));
+    }
+    //版本二：接受实值和buckets个数
+    size_type bkt_num(const Value& obj,size_type n) const
+    {
+        return bkt_num_key(get_key(obj),n);
+    }
+    //返回在index处的节点个数
+    size_type elems_in_bucket(size_type bucketIndex)
+    {
+        size_type n = 0;
+        node* tempNode = buckets[bucketIndex];
+        while(tempNode && ++n) tempNode = tempNode->next;
+        return n;
+    }
+    //整体删除
+    void clear();
+    //复制hash表
+    void copy_from(const hashtable& ht);
+private:
+    //初始化buckets vector
+    void initialize_buckets(size_type n)
+    {
+        const size_type n_buckets = next_size(n);
+        buckets.reserve(n_buckets);
+        buckets.insert(buckets.end(), n_buckets, (node*) 0);
+        num_elements = 0;
+    }
+    //节点配置和释放函数
+    node* new_node(const Value& obj)
+    {
+        //node *tempNode = node_allocator::allocate();
+        node* tempNode = new node;
+        tempNode->next = NULL;
+        try
+        {
+            construct(&tempNode->val,obj);
+        }
+        catch (...)
+        {
+            //node_allocator::deallocate(tempNode);
+            delete tempNode;
+            return NULL;
+        }
+        return tempNode;
+    }
+
+    void delete_node(node *n)
+    {
+        destroy(&n->val);
+        delete n;
+    }
+
+    //返回最接近n并大于等于n的质数
+    size_type next_size(size_type n)const
+    {
+        return __get_next_prime(n);
+    }
+
+    //版本一：只接受键值
+    size_type bkt_num_key(const Key& key) const
+    {
+        return hash(key) % (buckets.size());
+    }
+    //版本二：接受键值和buckets个数
+    size_type bkt_num_key(const Key& key,size_type n) const
+    {
+        return hash(key) % n;
+    }
+
+    //判断是否需要扩充buckets vector，如有需要则进行扩充
+    void resize(size_type num_elements_hint);
+    //在不需要重新分配bucket vector的情况下插入元素，元素不允许重复
+    std::pair<iterator, bool> insert_unique_noresize(const Value &obj);
+    //在不需要重新分配bucket vector的情况下插入元素，元素不允许重复
+    iterator insert_equal_noresize(const Value &obj);
+};
+
+template <class Value, class Key, class HashFcn, class ExtractKey, class EqualKey, class Alloc>
+void
+hashtable<Value, Key, HashFcn, ExtractKey, EqualKey, Alloc>::clear()
+{
+    for (size_type i = 0; i < buckets.size(); ++i)
+    {
+        node* curNode = buckets[i];
+        //delete every node in this list
+        while (curNode != 0)
+        {
+            node* next = curNode->next;
+            delete_node(curNode);
+            curNode = next;
+        }
+        buckets[i] = NULL;
+    }
+    //总结点数为0，buckets vector空间为释放掉
+    num_elements = 0;
+}
+
+template <class Value, class Key, class HashFcn, class ExtractKey, class EqualKey, class Alloc>
+void
+hashtable<Value, Key, HashFcn, ExtractKey, EqualKey, Alloc>::copy_from(const hashtable& ht)
+{
+    //调用vector自己的clear,清除自己的buckets vector
+    buckets.clear();
+    //调用vector的reserve,使自己的size和ht的一样
+    buckets.reserve(ht.buckets.size());
+    buckets.insert(buckets.end(),ht.buckets.size(), (node*) 0);
+    try
+    {
+        for (size_type i = 0; i < ht.buckets.size(); ++i)
+        {
+            //复制vector的每一个元素
+            if (const node * cur = ht.buckets[i])
+            {
+                node* copy = new_node(cur->val);
+                buckets[i] = copy;
+                //复制每一个list的node
+                for (node* next = cur->next; next; cur = next,next = cur->next)
+                {
+                    copy->next = new_node(next->val);
+                    copy = copy->next;
+                }
+            }
+        }
+        num_elements = ht.num_elements;
+    }
+    catch (...)
+    {
+        clear();
+    }
+}
+
+template <class Value, class Key, class HashFcn, class ExtractKey, class EqualKey, class Alloc>
+void
+hashtable<Value, Key, HashFcn, ExtractKey, EqualKey, Alloc>::resize(size_type num_elements_hint)
+{
+    //buckets vector重建与否的标准：
+    //比较新的总元素个数和原buckets vector大小,若前者大于后者，重建
+    const size_type old_n_vector = buckets.size();
+    //若前者大于后者，重建
+    if (num_elements_hint > old_n_vector)
+    {
+        const size_type n = next_size(num_elements_hint);
+        if (n > old_n_vector)//有可能vector已到达最大
+        {
+            //std::vector<node*, Alloc> tempVec(n,(node *)0);
+            std::vector<node*> tempVec(n,(node *)0);
+            for (size_type bucketIndex = 0; bucketIndex < old_n_vector; ++bucketIndex)
+            {
+                node *first = buckets[bucketIndex];//指向节点对应之串行的起始节点
+                while(first)
+                {
+                    //计算节点落在哪一个新的bucket内
+                    size_type new_bucketIndex = bkt_num_key(first->val,n);
+                    buckets[bucketIndex] = first->next;
+                    first->next = tempVec[new_bucketIndex];
+                    tempVec[new_bucketIndex] = first;
+                    first = buckets[bucketIndex];
+                }
+            }
+            //交换新旧两个bucket vector
+            buckets.swap(tempVec);
+        }
+    }
+}
+
+template <class Value, class Key, class HashFcn, class ExtractKey, class EqualKey, class Alloc>
+std::pair<typename hashtable<Value, Key, HashFcn, ExtractKey, EqualKey, Alloc>::iterator, bool>
+hashtable<Value, Key, HashFcn, ExtractKey, EqualKey, Alloc>::insert_unique_noresize(const Value& obj)
+{
+    size_type bucketIndex = bkt_num(obj);
+    node *first = buckets[bucketIndex]; //令first指向bucket对应之串行头部
+    //搜索当前链表
+    for (node *curNode = first; curNode; curNode = curNode->next)
+    {
+        if(equals(get_key(obj),get_key(curNode->val)))
+            return std::pair<iterator, bool>(iterator(curNode, this),false);
+    }
+
+    node *tempNode = new_node(obj);
+    tempNode->next = first;
+    buckets[bucketIndex] = tempNode;
+
+    ++num_elements;
+
+    return std::pair<iterator, bool>( iterator(tempNode,this), true);
+}
+
+
+template <class Value, class Key, class HashFcn, class ExtractKey, class EqualKey, class Alloc>
+typename hashtable<Value, Key, HashFcn, ExtractKey, EqualKey, Alloc>::iterator
+hashtable<Value, Key, HashFcn, ExtractKey, EqualKey, Alloc>::insert_equal_noresize(const Value &obj)
+{
+    size_t bucketIndex = bkt_num(obj);
+    node *first = buckets[bucketIndex];
+
+    //如果buckets[n] 已被占用，此时first不为0，进入循环，走完该index的链表
+    for (node *curNode = first; curNode; curNode = curNode->next)
+    {
+        //发现与链表中的某键值相等，马上插入，然后返回
+        if (equals(get_key(obj), get_key(curNode->val)))
+        {
+            node *tempNode = new_node(obj);
+            tempNode->next = curNode->next;
+            curNode->next = tempNode;
+            ++num_elements;
+            return iterator(tempNode,this);
+        }
+    }
+
+    //如果没发现键值相等的元素
+    node *tempNode = new_node(obj);
+    //将其插入链表头部
+    tempNode->next = first;
+    buckets[bucketIndex] = tempNode;
+    ++num_elements;
+    return iterator(tempNode, this);
+}
+#endif

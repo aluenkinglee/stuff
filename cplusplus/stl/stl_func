@@ -1,0 +1,86 @@
+#ifndef STL_FUNC
+#define STL_FUNC
+//hash functions
+template <class Key>  struct hash {};
+//字符串要进行映射
+inline size_t __stl_hash_string(const char *s)
+{
+    unsigned long h = 0;
+    for (; *s; ++s)
+    {
+        h = 5 * h + *s;
+    }
+    return size_t(h);
+}
+//这个类调用操作符()，类名(),看起来就像函数调用一样
+//现在只写了这些类型，其他long,double没写，测试而已。
+template <> struct hash<char*>
+{
+    size_t operator()(const char* s) const
+    {
+        return __stl_hash_string(s);
+    }
+};
+template <> struct hash<const char*>
+{
+    size_t operator()(const char* s) const
+    {
+        return __stl_hash_string(s);
+    }
+};
+template <> struct hash<char>
+{
+    size_t operator()(char s) const
+    {
+        return s;
+    }
+};
+template <> struct hash<int>
+{
+    size_t operator()(int x) const
+    {
+        return x;
+    }
+};
+// C++ Standard 规定，每一个 Adaptable Unary Function 都必须继承此类别
+template <class Arg,class Result>
+struct unary_function
+{
+    typedef Arg argument_type;
+    typedef Result result_type;
+};
+template <class Arg1,class Arg2,class Result>
+struct binary_function
+{
+    typedef Arg1 first_argument_type;
+    typedef Arg2 second_argument_type;
+    typedef Result result_type;
+};
+//从节点中取出键值的仿函数定义
+//identity function；任何数值通过此函数式后，不会发生任何改变
+template <class T>
+struct identity : public unary_function<T, T>
+{
+    const T& operator()(const T& x) const
+    {
+        return x;
+    }
+};
+//判断键值是否相等的仿函数定义
+template <class T>
+struct equal_to : public binary_function<T, T, bool>
+{
+    bool operator()(const T& x,const T& y) const
+    {
+        return x == y;
+    }
+};
+//比较字符串是否相等的仿函数
+struct eqstr
+{
+    bool operator()(const char *s1,const char *s2)const
+    {
+        return strcmp(s1,s2) == 0;
+    }
+};
+#endif
