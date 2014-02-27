@@ -85,6 +85,21 @@ typedef struct udp_header
     u_short uh_sum;
 } udp_header;
 
+static int is_tcp_begin(u_char flags) {
+    if ((flags & TH_SYN) && !(flags & TH_ACK))
+        return 1;
+    return 0;
+}
+static int is_tcp_sec(u_char flags) {
+    if ((flags & TH_SYN) && (flags & TH_ACK))
+        return 1;
+    return 0;
+}
+static int is_tcp_third(u_char flags) {
+    if (!(flags & TH_SYN) && (flags & TH_ACK))
+        return 1;
+    return 0;
+}
 
 void loop_callback(u_char *args, const struct pcap_pkthdr *header, const u_char *packet)
 {
@@ -136,24 +151,19 @@ void loop_callback(u_char *args, const struct pcap_pkthdr *header, const u_char 
 
         printf("%s:%d -> ", inet_ntoa(ip->ip_src), sport);
         printf("%s:%d ", inet_ntoa(ip->ip_dst), dport);
-
-        printf("%d ",ip->ip_p);
+        printf("[TCP] ");
+        if ( is_tcp_sec(tcp->th_flags))  {
+            printf("[SYN ACK] ");
+        } else if (is_tcp_begin(tcp->th_flags)) {
+            printf("[SYN] ");
+        } else if ( is_tcp_third(tcp->th_flags)) {
+            printf("[ACK] ");
+        }
         //内容
         payload = (u_char *)(packet + SIZE_ETHERNET + size_ip + size_tcp);
-
         //内容长度
         size_payload = ntohs(ip->ip_len) - (size_ip + size_tcp);
-
-        if (size_payload > 0)
-        {
-            //printf("%d bytes:\n", size_payload, payload);
-            printf("%u %d %d %d %d bytes\n", header->len,ntohs(tcp->th_seq), ntohs(tcp->th_ack), ntohs(tcp->th_flags)&(TH_SYN), size_payload );
-            //write(payload, size_payload);
-        }
-        else
-        {
-            printf("%u %u %u %d \n", header->len,ntohs(tcp->th_seq), ntohs(tcp->th_ack),ntohs(tcp->th_win));
-        }
+        printf("len=%u seq=%u ack=%u payload=%dbytes \n", header->len,ntohs(tcp->th_seq), ntohs(tcp->th_ack), size_payload );
         break;
     }
 
@@ -361,7 +371,7 @@ int main(int argc, char **argv)
         fprintf(stderr,"Couldn't open pcap file %s: %s\n", argv[1], errbuf);
         return(2);
     }
-    pcap_loop( handle, 5, loop_callback, NULL);
+    pcap_loop( handle, 25, loop_callback, NULL);
     pcap_close(handle);  //close the pcap file
     return 0; //done
 } //end of main() function
