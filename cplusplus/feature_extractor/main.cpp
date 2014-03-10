@@ -84,6 +84,7 @@ private:
     address dest;
     vector<Packet> stream;
 public:
+    typedef vector<Packet>::iterator iterator;
     flow(){}
     flow(string ip_src, int sport,
          string ip_dest, int dport)
@@ -122,7 +123,8 @@ public:
         else
             return false;
     }
-
+    iterator begin() { return stream.begin();}
+    iterator end() {return stream.end();}
 };
 
 class Flows {
@@ -264,7 +266,7 @@ void loop_callback(u_char *args, const struct pcap_pkthdr *header, const u_char 
             }
 
         }
-
+/*
         //不加上string会出现很奇怪的问题，这个问题不好形容。
         cout << string(iptest.source_ip()) <<":" << tcptest.sport() <<"==>"
             << string(iptest.dest_ip()) <<":"<< tcptest.dport();
@@ -278,7 +280,7 @@ void loop_callback(u_char *args, const struct pcap_pkthdr *header, const u_char 
         }
         cout << "len:"<<p.get_header().len
             <<" payload:"<< tcptest.payload_length()<<"bytes"<<endl;
-
+*/
 
 
 /*
@@ -347,6 +349,69 @@ int write(const u_char *p, int len )
 
 double time_diff(struct timeval x , struct timeval y);
 
+void feature_extractor(flow f)
+{
+    struct pcap_pkthdr header; // The header that pcap gives us
+    const u_char *packet; // The actual packet
+
+    struct timeval cur_ts = {0,0};  //current timestamp
+    struct timeval pre_ts =  {0,0};  //previous timestamp
+
+    vector<string> timeintervals;
+    vector<int> lens;
+    vector<string> features;
+    char buffer[50];
+
+    flow::iterator iter;
+
+    for(iter = f.begin(); iter != f.end();
+        ++iter)
+    {
+        //计算时间间隔。
+        header = iter->get_header();
+        if (cur_ts.tv_sec == 0)    //this takes care of the very first packet seen
+        {
+            //printf("%.6lf\n", time_diff(pre_ts,cur_ts));
+            pre_ts = cur_ts;
+            cur_ts = header.ts;
+        }
+        else
+        {
+            pre_ts = cur_ts;
+            cur_ts = header.ts;   //update time interval
+            //printf("%.6lf\n", time_diff(pre_ts,cur_ts));
+            sprintf(buffer,"%.6lf ", time_diff(pre_ts,cur_ts));
+            timeintervals.push_back(buffer);
+        }
+        // 包的长度。
+        lens.push_back(header.len);
+        //计算每个报文自己的属性
+        //sip,dip,sport,dport,payload_len,window size,...
+        Packet p(&(iter->get_header()),iter->get_packet());
+        Packet_ip ip =p.IP();
+        string sip = ip.source_ip();
+        string dip = ip.dest_ip();
+        if(ip.get_protocal() == IPPROTO_TCP) {
+            Packet_tcp tcp = p.TCP();
+            sprintf(buffer,"%s %s %s %d %d %d %d",
+                    ip.get_protocal(),
+                    sip.c_str(),
+                    dip.c_str(),
+                    tcp.sport(),
+                    tcp.dport(),
+                    tcp.payload_length(),
+                    tcp.window());
+            features.push_back(buffer);
+
+        } else if (ip.get_protocal() == IPPROTO_UDP) {
+        //udp
+            features.push_back(buffer);
+        }
+
+    }
+
+}
+
 int standord_test(int argc, char **argv)
 {
     vector<Packet> temp;
@@ -397,9 +462,9 @@ int standord_test(int argc, char **argv)
             // header contains information about the packet (e.g. timestamp)
 
             u_char *pkt_ptr = (u_char *)packet; //cast a pointer to the packet data
-            Packet p(&header,packet);
-            cout << "vector size:"<<temp.size() << endl;
-            temp.push_back(p);
+            //Packet p(&header,packet);
+            //cout << "vector size:"<<temp.size() << endl;
+            //temp.push_back(p);
 
             //parse the first (ethernet) header, grabbing the type field
             int ether_type = ((int)(pkt_ptr[12]) << 8) | (int)pkt_ptr[13];

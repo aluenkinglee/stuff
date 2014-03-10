@@ -199,11 +199,11 @@ public:
     {
         return this->size_tcp;
     }
-    int sport()
+    u_short sport()
     {
         return ntohs(this->header.th_sport);
     }
-    int dport()
+    u_short dport()
     {
         return ntohs(this->header.th_dport);
     }
@@ -211,6 +211,9 @@ public:
     {
         Packet_ip ip(this->packet);
         return ntohs(ip.ip_length()) - (ip.size() + this->size_tcp);
+    }
+    u_short window() {
+        return ntohs(this->header.th_win);
     }
     u_char get_flags()
     {
