@@ -178,6 +178,7 @@ public:
 };
 
 Flows flowpool;
+void feature_extractor(flow f);
 void loop_callback(u_char *args, const struct pcap_pkthdr *header, const u_char *packet)
 {
     static int count = 0;                           //包计数器
@@ -245,7 +246,7 @@ void loop_callback(u_char *args, const struct pcap_pkthdr *header, const u_char 
                 cout <<"目前的该流的大小："<<(*iter).size()<<endl;
             } else {
                 //开始检查下一个流。
-                ;
+                feature_extractor(f);
             }
 
         }
@@ -344,7 +345,7 @@ void feature_extractor(flow f)
         string dip = ip.dest_ip();
         if(ip.get_protocal() == IPPROTO_TCP) {
             Packet_tcp tcp = p.TCP();
-            sprintf(buffer,"%d %s %s %hd %hd %lu",
+            sprintf(buffer,"%d %s %s %hd %hd %zu",
                     ip.get_protocal(),
                     sip.c_str(),
                     dip.c_str(),
@@ -354,7 +355,7 @@ void feature_extractor(flow f)
             features.push_back(buffer);
         } else if (ip.get_protocal() == IPPROTO_UDP) {
         //udp
-            features.push_back(buffer);
+            //features.push_back(buffer);
         }
 
     }
