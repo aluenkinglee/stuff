@@ -1,0 +1,33 @@
+# depslib dependency file v1.0
+1394091028 source:/home/kinglee/workspace/cpp/feature_extractor/main.cpp
+	<stdio.h>
+	<stdlib.h>
+	<ctime>
+	<netinet/ip.h>
+	<netinet/if_ether.h>
+	<arpa/inet.h>
+	<pcap.h>
+	<string>
+	<vector>
+	<iostream>
+	<algorithm>
+	"macro.h"
+	"dissector.h"
+	"Packet.h"
+
+1393489307 /home/kinglee/workspace/cpp/feature_extractor/macro.h
+
+1394075255 /home/kinglee/workspace/cpp/feature_extractor/dissector.h
+	"macro.h"
+
+1394087558 /home/kinglee/workspace/cpp/feature_extractor/Packet.h
+	<iostream>
+	<netinet/ip.h>
+	<netinet/if_ether.h>
+	<arpa/inet.h>
+	<pcap.h>
+	<algorithm>
+	<vector>
+	<cstring>
+	"macro.h"
+

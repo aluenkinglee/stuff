@@ -87,7 +87,6 @@ public:
     {
         const struct packet_ip   *ip;
         ip = (struct packet_ip*)(packet + SIZE_ETHERNET);
-        cout <<inet_ntoa(ip->ip_src) <<":" <<inet_ntoa(ip->ip_dst)<<endl;
         size_ip = IP_HL(ip) * 4;
         _copy(*ip);
     }
@@ -111,15 +110,13 @@ public:
     {
         return this->header.ip_p;
     }
-    string source_ip()
+    char* source_ip()
     {
-        string src(inet_ntoa(this->header.ip_src));
-        return src;
+        return inet_ntoa(this->header.ip_src);
     }
-    string dest_ip()
+    char* dest_ip()
     {
-        string dst(inet_ntoa(this->header.ip_dst));
-        return dst;
+        return inet_ntoa(this->header.ip_dst);
     }
     size_t ip_length()
     {
@@ -158,25 +155,20 @@ typedef class Packet_tcp
 {
 private:
     packet_tcp header;
-    const u_char* packet;
+    u_char* packet;
     u_char* payload;
     size_t size_tcp;
 
 public:
-    Packet_tcp(const packet_tcp& pt)
-    {
-        _copy(&pt);
-    }
-    Packet_tcp(const packet_tcp* pt)
-    {
-        _copy(pt);
-    }
-    Packet_tcp(const u_char *packet)
+    Packet_tcp(const struct pcap_pkthdr *header, const u_char *packet)
     {
         const struct packet_tcp *tcp;
         Packet_ip ip(packet);
+
+        this->packet = new u_char[header->len];
+        memcpy(this->packet, packet, header->len);
         //注意这里指向了外面的packet
-        this->packet = packet;
+        //this->packet = packet;
         tcp = (struct packet_tcp*)(packet + SIZE_ETHERNET + ip.size());
         _copy(tcp);
     }
@@ -217,7 +209,7 @@ public:
     }
     size_t payload_length()
     {
-        Packet_ip ip(packet);
+        Packet_ip ip(this->packet);
         return ntohs(ip.ip_length()) - (ip.size() + this->size_tcp);
     }
     u_char get_flags()

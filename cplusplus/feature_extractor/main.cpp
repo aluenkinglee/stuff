@@ -12,6 +12,8 @@
 #include <string>
 #include <vector>
 #include <iostream>
+#include <ostream>
+#include <algorithm>
 
 #include "macro.h"
 #include "dissector.h"
@@ -21,48 +23,159 @@ using namespace std;
 typedef class Packet
 {
 private:
-    struct pcap_pkthdr h;
-    u_char *p;
+    struct pcap_pkthdr header;
+    u_char *packet;
 public:
     Packet(const Packet &packet)
     {
-        memcpy(&h, &packet.p, sizeof(struct pcap_pkthdr));
-        this->p = new u_char[this->h.len];
-        memcpy(this->p,packet.p, h.len);
+        //这里写错了。。。memcpy(&h, &packet.p, sizeof(struct pcap_pkthdr));
+        memcpy(&(this->header), &packet.header, sizeof(struct pcap_pkthdr));
+        this->packet = new u_char[this->header.len];
+        memcpy(this->packet, packet.packet, this->header.len);
     }
 
     Packet& operator=(const Packet& packet)
     {
-        memcpy(&h, &packet.h, sizeof(struct pcap_pkthdr));
-        this->p = new u_char[packet.h.len];
-        memcpy(p,packet.p, h.len);
+        memcpy(&(this->header), &packet.header, sizeof(struct pcap_pkthdr));
+        this->packet = new u_char[packet.header.len];
+        memcpy(this->packet, packet.packet, this->header.len);
         return *this;
     }
 
     Packet( const struct pcap_pkthdr *header, const u_char* packet)
     {
         //!!!!!!!!new u_char[len] not new u_char(len)
-        this->p = new u_char[header->len];
-        memcpy(p,packet,header->len);
-        memcpy(&h,header,sizeof(struct pcap_pkthdr));
+        this->packet = new u_char[header->len];
+        memcpy(this->packet, packet, header->len);
+        memcpy(&(this->header), header, sizeof(struct pcap_pkthdr));
     }
     ~Packet()
     {
-        delete[] p;
+        delete[] this->packet;
     }
 public:
-    pcap_pkthdr get_header()
+    pcap_pkthdr& get_header()
     {
-        return this->h;
+        return this->header;
     }
     u_char* get_packet()
     {
-        return this->p;
+        return this->packet;
+    }
+    Packet_ip IP()
+    {
+        Packet_ip ip(this->packet);
+        return ip;
+    }
+    Packet_tcp TCP()
+    {
+        Packet_tcp tcp(&(this->header), this->packet);
+        return tcp;
     }
 }Packet;
 
 vector<Packet> stream;
 
+class flow
+{
+private:
+    typedef pair<string, int> address;
+    address source;
+    address dest;
+    vector<Packet> stream;
+public:
+    flow(){}
+    flow(string ip_src, int sport,
+         string ip_dest, int dport)
+    {
+        source = make_pair(ip_src, sport);
+        dest = make_pair(ip_dest, dport);
+    }
+    flow(const flow& other)
+    {
+        source = other.source;
+        dest = other.dest;
+        stream = other.stream;
+    }
+    flow& operator=(const flow & other)
+    {
+        source = other.source;
+        dest = other.dest;
+        stream = other.stream;
+        return *this;
+    }
+    ~flow(){}
+public:
+    size_t size() { return stream.size(); }
+    void push_back(const Packet& p) { stream.push_back(p); }
+    void setflow(string ip_src, int sport,
+                 string ip_dest, int dport)
+    {
+        source = make_pair(ip_src, sport);
+        dest = make_pair(ip_dest, dport);
+    }
+    bool operator==(const flow& other) const
+    {
+        if ((source == other.source && dest == other.dest) ||
+            (source == other.dest && dest == other.source))
+            return true;
+        else
+            return false;
+    }
+
+};
+
+class Flows {
+private:
+    vector<flow> data;
+public:
+    typedef vector<flow>::iterator iterator;
+    typedef Flows& ref;
+
+    Flows() {}
+    Flows(const ref other)
+    {
+        data = other.data;
+    }
+    ref operator=(const ref other)
+    {
+        data = other.data;
+        return *this;
+    }
+    ~Flows() { data.clear(); }
+public:
+    bool is_unique(const flow& f )
+    {
+        iterator iter;
+        for(iter = data.begin(); iter != data.end();
+            ++iter)
+        {
+            if (*iter == f)
+                return false;
+        }
+        return true;
+    }
+    size_t size() {return data.size();}
+    void push_back(const flow& f)
+    {
+        data.push_back(f);
+    }
+    iterator find(const flow& f)
+    {
+        return std::find(data.begin(), data.end(), f);
+    }
+    iterator erase(iterator pos)
+    {
+        return data.erase(pos);
+    }
+    std::ostream& operator<<(std::ostream& os)
+    {
+        os << " " ;
+        return os;
+    }
+};
+
+Flows flowpool;
 void loop_callback(u_char *args, const struct pcap_pkthdr *header, const u_char *packet)
 {
     static int count = 0;                           //包计数器
@@ -70,7 +183,7 @@ void loop_callback(u_char *args, const struct pcap_pkthdr *header, const u_char 
     const struct packet_ip   *ip;                 //the IP header
     const struct packet_tcp *tcp;                   //The TCP header */
     const struct udp_header *udp;
-    u_char *payload;                                //Packet payload */
+    //u_char *payload;                                //Packet payload */
 
     int size_ip;
     int size_tcp;
@@ -80,13 +193,26 @@ void loop_callback(u_char *args, const struct pcap_pkthdr *header, const u_char 
     count++;
 
     Packet p(header,packet);
-    //stream.push_back(p);
+
     /* 以太网头 */
     ethernet = (struct packet_ethernet*)(packet);
 
     /* IP头 */
+
+    Packet_ip iptest =p.IP();
+    size_ip = iptest.size();
+
+    /*
+    cout << "size_ip:"<<iptest.size() <<endl;
+    cout << "ip_protocal:" << iptest.get_protocal() << endl;
+    if ( size_ip < 20)
+    {
+        printf("无效的IP头长度: %u bytes\n", size_ip);
+        return;
+    }
+    */
     ip = (struct packet_ip*)(packet + SIZE_ETHERNET);
-    size_ip = IP_HL(ip)*4;
+    //size_ip = IP_HL(ip)*4;
     if (size_ip < 20)
     {
         printf("无效的IP头长度: %u bytes\n", size_ip);
@@ -100,17 +226,69 @@ void loop_callback(u_char *args, const struct pcap_pkthdr *header, const u_char 
         /* TCP头 */
         tcp = (struct packet_tcp*)(packet + SIZE_ETHERNET + size_ip);
         size_tcp = TH_OFF(tcp)*4;
+        Packet_tcp tcptest = p.TCP();
         if (size_tcp < 20)
         {
-            printf("无效的TCP头长度: %u bytes\n", size_tcp);
+            //printf("无效的TCP头长度: %u bytes\n", size_tcp);
             return;
         }
 
+        flow f(iptest.source_ip(), tcptest.sport(),
+               iptest.dest_ip(), tcptest.dport());
+
+        cout << "flowpool的大小:"<<flowpool.size() << endl;
+        //判断该流是否是一个心底的流？
+        //说起新的流，必须还得检查它是有SYN等标志，才可以确定可以加入。
+        //否则，pass 掉
+        if(flowpool.is_unique(f)){
+            //是一个新的流的开始.
+            //创建流，加入到流中。
+            //根据tcp中的flags判断是不是一个新的流。
+            if(Dissector::is_tcp_new(p.TCP().get_flags())){
+                f.push_back(p);
+                cout <<"目前的该流的大小："<<f.size()<<endl;
+                flowpool.push_back(f);
+                //开始下一个包。
+            }
+        } else {
+            //不是一个新的流，查找在数据中的位置。
+            Flows::iterator iter=flowpool.find(f);
+
+            if((*iter).size()<10)
+            {
+                iter->push_back(p);
+                cout <<"目前的该流的大小："<<(*iter).size()<<endl;
+            } else {
+                //开始检查下一个流。
+                ;
+            }
+
+        }
+
+        //不加上string会出现很奇怪的问题，这个问题不好形容。
+        cout << string(iptest.source_ip()) <<":" << tcptest.sport() <<"==>"
+            << string(iptest.dest_ip()) <<":"<< tcptest.dport();
+        cout << "[TCP] ";
+        if (Dissector::is_tcp_begin(tcptest.get_flags())){
+            cout << "[SYN] ";
+        }else if(Dissector::is_tcp_sec(tcptest.get_flags())) {
+            cout << "[SYN ACK] ";
+        }else if(Dissector::is_tcp_third(tcptest.get_flags())) {
+            cout << "[ACK] ";
+        }
+        cout << "len:"<<p.get_header().len
+            <<" payload:"<< tcptest.payload_length()<<"bytes"<<endl;
+
+
+
+/*
         int sport =  ntohs(tcp->th_sport);
         int dport =  ntohs(tcp->th_dport);
 
         printf("%s:%d -> ", inet_ntoa(ip->ip_src), sport);
         printf("%s:%d ", inet_ntoa(ip->ip_dst), dport);
+
+
         printf("[TCP] ");
         if ( Dissector::is_tcp_sec(tcp->th_flags))
         {
@@ -124,11 +302,13 @@ void loop_callback(u_char *args, const struct pcap_pkthdr *header, const u_char 
         {
             printf("[ACK] ");
         }
+
         //内容
-        payload = (u_char *)(packet + SIZE_ETHERNET + size_ip + size_tcp);
+        //payload = (u_char *)(packet + SIZE_ETHERNET + size_ip + size_tcp);
         //内容长度
         size_payload = ntohs(ip->ip_len) - (size_ip + size_tcp);
         printf("len=%u seq=%u ack=%u payload=%dbytes \n", header->len,ntohs(tcp->th_seq), ntohs(tcp->th_ack), size_payload );
+*/
         break;
     }
 
@@ -167,30 +347,6 @@ int write(const u_char *p, int len )
 
 double time_diff(struct timeval x , struct timeval y);
 
-void test()
-{
-    pcap_t *handle; /* 会话句柄 */
-    char *dev; /* 执行嗅探的设备 */
-    char errbuf[PCAP_ERRBUF_SIZE]; /* 存储错误信息的字符串 */
-    struct bpf_program filter; /* 已经编译好的过滤器 */
-    char filter_app[] = "port 80"; /* 过滤表达式 */
-    bpf_u_int32 mask; /* 所在网络的掩码 */
-    bpf_u_int32 net; /* 主机的IP地址 */
-    //struct pcap_pkthdr header; /* 由pcap.h定义 */
-    //const u_char *packet; /* 实际的包 */
-    /* Define the device */
-    /* dev = pcap_lookupdev(errbuf); */
-    //dev = "em2";  /* 网卡名称 */
-    pcap_lookupnet(dev, &net, &mask, errbuf); /* 探查设备属性 */
-    handle = pcap_open_live(dev, 65536, 1, 0, errbuf); /* 以混杂模式打开会话 */
-    pcap_compile(handle, &filter, filter_app, 0, net); /* 编译并应用过滤器 */
-    pcap_setfilter(handle, &filter);
-
-    pcap_loop( handle, 10, loop_callback, NULL);
-    pcap_close(handle); /* 关闭会话 */
-    return ;
-}
-
 int standord_test(int argc, char **argv)
 {
     vector<Packet> temp;
@@ -198,16 +354,12 @@ int standord_test(int argc, char **argv)
     unsigned long byte_counter=0; //total bytes seen in entire trace
     unsigned long cur_counter=0; //counter for current 1-second interval
     unsigned long max_volume = 0;  //max value of bytes in one-second interval
-    //unsigned long current_ts=0; //current timestamp
-    //unsigned long previous_ts=0;  //previous timestamp
+
 
     struct timeval cur_ts = {0,0};  //current timestamp
     struct timeval pre_ts =  {0,0};  //previous timestamp
 
-    // time_t nowtime;
-    // struct tm *nowtm;
-    // char tmbuf[64], buf[64];
-    //temporary packet buffers
+
 
     struct pcap_pkthdr header; // The header that pcap gives us
     const u_char *packet; // The actual packet
@@ -244,22 +396,10 @@ int standord_test(int argc, char **argv)
         {
             // header contains information about the packet (e.g. timestamp)
 
-            // printf("Grabbed packet of length %d\n",header.len);
-            // printf("Recieved at ..... %.6lf\n",(double)header.ts.tv_usec);
-            // //printf("Recieved at ..... %s\n",ctime((const time_t*)&header.ts.tv_usec));
-            // printf("Ethernet address length is %d\n",ETHER_HDR_LEN);
-            // nowtime = header.ts.tv_sec;
-            // nowtm = localtime(&nowtime);
-            //strftime(tmbuf, sizeof tmbuf, "%Y-%m-%d %H:%M:%S", nowtm);
-            // tmbuf[0]='0';
-            // tmbuf[1]='\0';
-            // snprintf(buf, sizeof buf, "%s.%06d", tmbuf, header.ts.tv_usec);
-            //printf("%s\n",buf );
-
             u_char *pkt_ptr = (u_char *)packet; //cast a pointer to the packet data
             Packet p(&header,packet);
-            cout << p.get_header().len << endl;
-            temp.push_back(Packet(&header, packet));
+            cout << "vector size:"<<temp.size() << endl;
+            temp.push_back(p);
 
             //parse the first (ethernet) header, grabbing the type field
             int ether_type = ((int)(pkt_ptr[12]) << 8) | (int)pkt_ptr[13];
@@ -284,12 +424,6 @@ int standord_test(int argc, char **argv)
                 printf("%.6lf\n", time_diff(pre_ts,cur_ts));
                 pre_ts = cur_ts;
                 cur_ts = header.ts;
-                // } else if (header.ts.tv_sec > cur_ts.tv_sec) {
-                //    //printf("%d KBps\n", cur_counter/1000); //print
-                //    cur_counter = 0; //reset counters
-                //    pre_ts = cur_ts;
-                //    cur_ts = header.ts;   //update time interval
-                //    //current_ts = header.ts.tv_sec; //update time interval
             }
             else
             {
@@ -344,10 +478,17 @@ int run(int argc, char **argv)
 
     return 0; //done
 } //end of main() function
+
 int main(int argc, char **argv)
 {
-    return run(argc, argv);
-
+    run(argc, argv);
+    //cout << stream.size() << endl;
+    //pair<string, int > s("12.23.23.2",34);
+    //pair<string, int > d("12.23.23.2",34);
+    //flow s("12.23.23.2",34,"12.23.23.23",35);
+    //flow d("12.23.23.23",34,"12.23.23.2",34);
+    //cout << (s==d) << endl;
+    return 0;
 }
 double time_diff(struct timeval x , struct timeval y)
 {
