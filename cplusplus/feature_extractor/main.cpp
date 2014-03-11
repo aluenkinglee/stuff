@@ -13,6 +13,7 @@
 #include <vector>
 #include <iostream>
 #include <ostream>
+#include <fstream>
 #include <algorithm>
 
 #include "macro.h"
@@ -179,6 +180,7 @@ public:
 
 Flows flowpool;
 void feature_extractor(flow f);
+
 void loop_callback(u_char *args, const struct pcap_pkthdr *header, const u_char *packet)
 {
     static int count = 0;                           //包计数器
@@ -209,8 +211,6 @@ void loop_callback(u_char *args, const struct pcap_pkthdr *header, const u_char 
     case IPPROTO_TCP:
     {
         /* TCP头 */
-        //tcp = (struct packet_tcp*)(packet + SIZE_ETHERNET + size_ip);
-
         Packet_tcp tcptest = p.TCP();
         size_tcp = tcptest.size();
         if (size_tcp < 20)
@@ -245,8 +245,10 @@ void loop_callback(u_char *args, const struct pcap_pkthdr *header, const u_char 
                 iter->push_back(p);
                 cout <<"目前的该流的大小："<<(*iter).size()<<endl;
             } else {
+                //提取大小为10的流的特征向量。
+                feature_extractor(*iter);
+                flowpool.erase(iter);
                 //开始检查下一个流。
-                feature_extractor(f);
             }
 
         }
@@ -290,14 +292,17 @@ void loop_callback(u_char *args, const struct pcap_pkthdr *header, const u_char 
     }
     }
 }
-
-int write(const u_char *p, int len )
+template <typename T>
+int write(const vector<T> &data)
 {
-    FILE *fp;
-    fp = fopen("/opt/mm/bin","a");
-    fwrite(p, len, 1, fp );
-    fwrite("\n\n", 4, 1, fp );
-    return fclose(fp);
+    ofstream outfile;
+    outfile.open("features.txt",ofstream::out | ofstream::app);
+    //typename vector<T>::iterator iter;
+    for (size_t i=0;i<data.size();i++)
+    {
+        outfile << data[i] << " ";
+    }
+    outfile.close();
 }
 
 double time_diff(struct timeval x , struct timeval y);
@@ -315,7 +320,7 @@ void feature_extractor(flow f)
     char buffer[50];
 
     flow::iterator iter;
-
+    cout << "f size:"<<f.size()<<"...."<<endl;
     for(iter = f.begin(); iter != f.end();
         ++iter)
     {
@@ -333,6 +338,7 @@ void feature_extractor(flow f)
             cur_ts = header.ts;   //update time interval
             //printf("%.6lf\n", time_diff(pre_ts,cur_ts));
             sprintf(buffer,"%.6lf ", time_diff(pre_ts,cur_ts));
+            cout << buffer <<" " ;
             timeintervals.push_back(buffer);
         }
         // 包的长度。
@@ -345,21 +351,31 @@ void feature_extractor(flow f)
         string dip = ip.dest_ip();
         if(ip.get_protocal() == IPPROTO_TCP) {
             Packet_tcp tcp = p.TCP();
-            sprintf(buffer,"%d %s %s %hd %hd %zu",
-                    ip.get_protocal(),
+            sprintf(buffer,"%s %s %hu %hu %zu",
                     sip.c_str(),
                     dip.c_str(),
                     tcp.sport(),
                     tcp.dport(),
                     tcp.payload_length());
             features.push_back(buffer);
+            cout << buffer <<endl;
+
         } else if (ip.get_protocal() == IPPROTO_UDP) {
         //udp
             //features.push_back(buffer);
+            ;
         }
 
     }
+    write(timeintervals);
+    write(lens);
+    write(features);
 
+    //输出换行符
+    fstream outfile;
+    outfile.open("features.txt",ofstream::out | ofstream::app);
+    outfile<<endl;
+    outfile.close();
 }
 
 int run(int argc, char **argv)
@@ -379,7 +395,7 @@ int run(int argc, char **argv)
         fprintf(stderr,"Couldn't open pcap file %s: %s\n", argv[1], errbuf);
         return(2);
     }
-    pcap_loop( handle, 25, loop_callback, NULL);
+    pcap_loop( handle, 30, loop_callback, NULL);
     pcap_close(handle);  //close the pcap file
 
     return 0; //done
