@@ -73,7 +73,7 @@ public:
         Packet_tcp tcp(&(this->header), this->packet);
         return tcp;
     }
-}Packet;
+} Packet;
 
 vector<Packet> stream;
 
@@ -86,7 +86,7 @@ private:
     vector<Packet> stream;
 public:
     typedef vector<Packet>::iterator iterator;
-    flow(){}
+    flow() {}
     flow(string ip_src, int sport,
          string ip_dest, int dport)
     {
@@ -106,10 +106,16 @@ public:
         stream = other.stream;
         return *this;
     }
-    ~flow(){}
+    ~flow() {}
 public:
-    size_t size() { return stream.size(); }
-    void push_back(const Packet& p) { stream.push_back(p); }
+    size_t size()
+    {
+        return stream.size();
+    }
+    void push_back(const Packet& p)
+    {
+        stream.push_back(p);
+    }
     void setflow(string ip_src, int sport,
                  string ip_dest, int dport)
     {
@@ -119,16 +125,23 @@ public:
     bool operator==(const flow& other) const
     {
         if ((source == other.source && dest == other.dest) ||
-            (source == other.dest && dest == other.source))
+                (source == other.dest && dest == other.source))
             return true;
         else
             return false;
     }
-    iterator begin() { return stream.begin();}
-    iterator end() {return stream.end();}
+    iterator begin()
+    {
+        return stream.begin();
+    }
+    iterator end()
+    {
+        return stream.end();
+    }
 };
 
-class Flows {
+class Flows
+{
 private:
     vector<flow> data;
 public:
@@ -145,20 +158,26 @@ public:
         data = other.data;
         return *this;
     }
-    ~Flows() { data.clear(); }
+    ~Flows()
+    {
+        data.clear();
+    }
 public:
     bool is_unique(const flow& f )
     {
         iterator iter;
         for(iter = data.begin(); iter != data.end();
-            ++iter)
+                ++iter)
         {
             if (*iter == f)
                 return false;
         }
         return true;
     }
-    size_t size() {return data.size();}
+    size_t size()
+    {
+        return data.size();
+    }
     void push_back(const flow& f)
     {
         data.push_back(f);
@@ -184,7 +203,7 @@ void feature_extractor(flow f);
 void loop_callback(u_char *args, const struct pcap_pkthdr *header, const u_char *packet)
 {
     static int count = 0;                           //包计数器
-    const struct packet_ip   *ip;                 //the IP header
+    //const struct packet_ip   *ip;                 //the IP header
     const struct udp_header *udp;
 
     int size_ip;
@@ -198,7 +217,7 @@ void loop_callback(u_char *args, const struct pcap_pkthdr *header, const u_char 
     Packet_ip iptest =p.IP();
     size_ip = iptest.size();
 
-    ip = (struct packet_ip*)(packet + SIZE_ETHERNET);
+    //ip = (struct packet_ip*)(packet + SIZE_ETHERNET);
 
     if (size_ip < 20)
     {
@@ -226,17 +245,21 @@ void loop_callback(u_char *args, const struct pcap_pkthdr *header, const u_char 
         //判断该流是否是一个心底的流？
         //说起新的流，必须还得检查它是有SYN等标志，才可以确定可以加入。
         //否则，pass 掉
-        if(flowpool.is_unique(f)){
+        if(flowpool.is_unique(f))
+        {
             //是一个新的流的开始.
             //创建流，加入到流中。
             //根据tcp中的flags判断是不是一个新的流。
-            if(Dissector::is_tcp_new(p.TCP().get_flags())){
+            if(Dissector::is_tcp_new(p.TCP().get_flags()))
+            {
                 f.push_back(p);
                 cout <<"目前的该流的大小："<<f.size()<<endl;
                 flowpool.push_back(f);
                 //开始下一个包。
             }
-        } else {
+        }
+        else
+        {
             //不是一个新的流，查找在数据中的位置。
             Flows::iterator iter=flowpool.find(f);
 
@@ -244,7 +267,9 @@ void loop_callback(u_char *args, const struct pcap_pkthdr *header, const u_char 
             {
                 iter->push_back(p);
                 cout <<"目前的该流的大小："<<(*iter).size()<<endl;
-            } else {
+            }
+            else
+            {
                 //提取大小为10的流的特征向量。
                 feature_extractor(*iter);
                 flowpool.erase(iter);
@@ -252,21 +277,6 @@ void loop_callback(u_char *args, const struct pcap_pkthdr *header, const u_char 
             }
 
         }
-/*
-        //不加上string会出现很奇怪的问题，这个问题不好形容。
-        cout << string(iptest.source_ip()) <<":" << tcptest.sport() <<"==>"
-            << string(iptest.dest_ip()) <<":"<< tcptest.dport();
-        cout << "[TCP] ";
-        if (Dissector::is_tcp_begin(tcptest.get_flags())){
-            cout << "[SYN] ";
-        }else if(Dissector::is_tcp_sec(tcptest.get_flags())) {
-            cout << "[SYN ACK] ";
-        }else if(Dissector::is_tcp_third(tcptest.get_flags())) {
-            cout << "[ACK] ";
-        }
-        cout << "len:"<<p.get_header().len
-            <<" payload:"<< tcptest.payload_length()<<"bytes"<<endl;
-*/
         break;
     }
 
@@ -277,16 +287,16 @@ void loop_callback(u_char *args, const struct pcap_pkthdr *header, const u_char 
         int sport =  ntohs(udp->uh_sport);
         int dport =  ntohs(udp->uh_dport);
 
-        printf("%s:%d -> ", inet_ntoa(ip->ip_src), sport);
-        printf("%s:%d ", inet_ntoa(ip->ip_dst), dport);
-        printf("%d %d\n",ip->ip_p, udp->uh_len);
+        printf("%s:%d -> ", iptest.source_ip(), sport);
+        printf("%s:%d ", iptest.dest_ip(), dport);
+        printf("%lu %d\n",iptest.get_protocal(), udp->uh_len);
 
         break;
     }
 
     default:
     {
-        printf("%d ",ip->ip_p);
+        printf("%lu ",iptest.get_protocal());
         printf("other protocals.\n");
         break;
     }
@@ -298,11 +308,12 @@ int write(const vector<T> &data)
     ofstream outfile;
     outfile.open("features.txt",ofstream::out | ofstream::app);
     //typename vector<T>::iterator iter;
-    for (size_t i=0;i<data.size();i++)
+    for (size_t i=0; i<data.size(); i++)
     {
         outfile << data[i] << " ";
     }
     outfile.close();
+    return 0;
 }
 
 double time_diff(struct timeval x , struct timeval y);
@@ -322,7 +333,7 @@ void feature_extractor(flow f)
     flow::iterator iter;
     cout << "f size:"<<f.size()<<"...."<<endl;
     for(iter = f.begin(); iter != f.end();
-        ++iter)
+            ++iter)
     {
         //计算时间间隔。
         header = iter->get_header();
@@ -349,7 +360,8 @@ void feature_extractor(flow f)
         Packet_ip ip =p.IP();
         string sip = ip.source_ip();
         string dip = ip.dest_ip();
-        if(ip.get_protocal() == IPPROTO_TCP) {
+        if(ip.get_protocal() == IPPROTO_TCP)
+        {
             Packet_tcp tcp = p.TCP();
             sprintf(buffer,"%s %s %hu %hu %zu",
                     sip.c_str(),
@@ -360,8 +372,10 @@ void feature_extractor(flow f)
             features.push_back(buffer);
             cout << buffer <<endl;
 
-        } else if (ip.get_protocal() == IPPROTO_UDP) {
-        //udp
+        }
+        else if (ip.get_protocal() == IPPROTO_UDP)
+        {
+            //udp
             //features.push_back(buffer);
             ;
         }
@@ -401,26 +415,143 @@ int run(int argc, char **argv)
     return 0; //done
 } //end of main() function
 
+int preprocess(int argc,char **argv)
+{
+    struct pcap_pkthdr header;
+    const u_char *packet;
+
+    const struct udp_header *udp;
+    int size_ip;
+    int size_tcp;
+
+    if (argc < 2)
+    {
+
+        fprintf(stderr, "Usage: %s [input pcaps]\n", argv[0]);
+        exit(1);
+    }
+    // Begin Main Packet Processing Loop
+    // loop through each pcap file in command line args
+
+    pcap_t *handle;
+    char errbuf[PCAP_ERRBUF_SIZE];
+    // open the pcap file
+    handle = pcap_open_offline(argv[1], errbuf);
+
+    if (handle == NULL)
+    {
+        fprintf(stderr,"Couldn't open pcap file %s: %s\n", argv[1], errbuf);
+        return(1);
+    }
+
+    // begin processing the packets in this particular file
+    // one at a time
+    while (packet = pcap_next(handle,&header))
+    {
+        Packet p(&header,packet);
+        /* IP头 */
+        Packet_ip iptest =p.IP();
+        size_ip = iptest.size();
+
+        //ip = (struct packet_ip*)(packet + SIZE_ETHERNET);
+
+        if (size_ip < 20)
+        {
+            printf("无效的IP头长度: %u bytes\n", size_ip);
+            continue;
+        }
+
+        switch (iptest.get_protocal())
+        {
+        case IPPROTO_TCP:
+        {
+            /* TCP头 */
+            Packet_tcp tcptest = p.TCP();
+            size_tcp = tcptest.size();
+            if (size_tcp < 20)
+            {
+                //printf("无效的TCP头长度: %u bytes\n", size_tcp);
+                continue;
+            }
+
+            flow f(iptest.source_ip(), tcptest.sport(),
+                   iptest.dest_ip(), tcptest.dport());
+
+            cout << "flowpool的大小:"<<flowpool.size() << endl;
+            //判断该流是否是一个心底的流？
+            //说起新的流，必须还得检查它是有SYN等标志，才可以确定可以加入。
+            //否则，pass 掉
+            if(flowpool.is_unique(f))
+            {
+                //是一个新的流的开始.
+                //创建流，加入到流中。
+                //根据tcp中的flags判断是不是一个新的流。
+                if(Dissector::is_tcp_new(p.TCP().get_flags()))
+                {
+                    f.push_back(p);
+                    cout <<"目前的该流的大小："<<f.size()<<endl;
+                    flowpool.push_back(f);
+                    //开始下一个包。
+                }
+            }
+            else
+            {
+                //不是一个新的流，查找在数据中的位置。
+                Flows::iterator iter=flowpool.find(f);
+
+                if((*iter).size()<10)
+                {
+                    iter->push_back(p);
+                    cout <<"目前的该流的大小："<<(*iter).size()<<endl;
+                }
+                else
+                {
+                    //提取大小为10的流的特征向量。
+                    feature_extractor(*iter);
+                    flowpool.erase(iter);
+                    //开始检查下一个流。
+                }
+
+            }
+            break;
+        }
+
+        case IPPROTO_UDP:
+        {
+            udp = (udp_header*) (packet + SIZE_ETHERNET + size_ip);
+
+            int sport =  ntohs(udp->uh_sport);
+            int dport =  ntohs(udp->uh_dport);
+
+            printf("%s:%d -> ", iptest.source_ip(), sport);
+            printf("%s:%d ", iptest.dest_ip(), dport);
+            printf("%lu %d\n",iptest.get_protocal(), udp->uh_len);
+
+            break;
+        }
+
+        default:
+        {
+            printf("%lu ",iptest.get_protocal());
+            printf("other protocals.\n");
+            break;
+        }// end of default
+
+        }
+    }
+    return 1;
+}
 int main(int argc, char **argv)
 {
-    run(argc, argv);
-    //cout << stream.size() << endl;
-    //pair<string, int > s("12.23.23.2",34);
-    //pair<string, int > d("12.23.23.2",34);
-    //flow s("12.23.23.2",34,"12.23.23.23",35);
-    //flow d("12.23.23.23",34,"12.23.23.2",34);
-    //cout << (s==d) << endl;
+    preprocess(argc, argv);
     return 0;
 }
 double time_diff(struct timeval x , struct timeval y)
 {
     double x_ms , y_ms , diff;
-
     x_ms = (double)x.tv_sec*1000000 + (double)x.tv_usec;
-// printf("before : %.6lf s\n" , x_ms/1000000 );
     y_ms = (double)y.tv_sec*1000000 + (double)y.tv_usec;
     //printf("after : %.6lf s\n" , y_ms/1000000 );
     diff = (double)y_ms - (double)x_ms;
-
     return diff/1000000;
 }
