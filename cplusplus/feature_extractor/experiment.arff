@@ -1,0 +1,83 @@
+@relation InstanceResultListener
+
+@attribute Key_Dataset {processed-weka.filters.unsupervised.attribute.NumericToNominal-Rfirst-last}
+@attribute Key_Run {1,2,3,4,5,6,7,8,9,10}
+@attribute Key_Scheme {weka.classifiers.bayes.NaiveBayes,weka.classifiers.functions.SimpleLogistic}
+@attribute Key_Scheme_options {'','-I 0 -M 500 -H 50 -W 0.0'}
+@attribute Key_Scheme_version_ID {5995231201785697655,7397710626304705059}
+@attribute Date_time numeric
+@attribute Number_of_training_instances numeric
+@attribute Number_of_testing_instances numeric
+@attribute Number_correct numeric
+@attribute Number_incorrect numeric
+@attribute Number_unclassified numeric
+@attribute Percent_correct numeric
+@attribute Percent_incorrect numeric
+@attribute Percent_unclassified numeric
+@attribute Kappa_statistic numeric
+@attribute Mean_absolute_error numeric
+@attribute Root_mean_squared_error numeric
+@attribute Relative_absolute_error numeric
+@attribute Root_relative_squared_error numeric
+@attribute SF_prior_entropy numeric
+@attribute SF_scheme_entropy numeric
+@attribute SF_entropy_gain numeric
+@attribute SF_mean_prior_entropy numeric
+@attribute SF_mean_scheme_entropy numeric
+@attribute SF_mean_entropy_gain numeric
+@attribute KB_information numeric
+@attribute KB_mean_information numeric
+@attribute KB_relative_information numeric
+@attribute True_positive_rate numeric
+@attribute Num_true_positives numeric
+@attribute False_positive_rate numeric
+@attribute Num_false_positives numeric
+@attribute True_negative_rate numeric
+@attribute Num_true_negatives numeric
+@attribute False_negative_rate numeric
+@attribute Num_false_negatives numeric
+@attribute IR_precision numeric
+@attribute IR_recall numeric
+@attribute F_measure numeric
+@attribute Area_under_ROC numeric
+@attribute Weighted_avg_true_positive_rate numeric
+@attribute Weighted_avg_false_positive_rate numeric
+@attribute Weighted_avg_true_negative_rate numeric
+@attribute Weighted_avg_false_negative_rate numeric
+@attribute Weighted_avg_IR_precision numeric
+@attribute Weighted_avg_IR_recall numeric
+@attribute Weighted_avg_F_measure numeric
+@attribute Weighted_avg_area_under_ROC numeric
+@attribute Elapsed_Time_training numeric
+@attribute Elapsed_Time_testing numeric
+@attribute UserCPU_Time_training numeric
+@attribute UserCPU_Time_testing numeric
+@attribute Serialized_Model_Size numeric
+@attribute Serialized_Train_Set_Size numeric
+@attribute Serialized_Test_Set_Size numeric
+@attribute Summary string
+@attribute measureAttributesUsed numeric
+@attribute measureNumIterations numeric
+
+@data
+
+processed-weka.filters.unsupervised.attribute.NumericToNominal-Rfirst-last,1,weka.classifiers.bayes.NaiveBayes,'',5995231201785697655,20140417.0826,29,13,7,6,0,53.846154,46.153846,0,0.309735,0.075462,0.226413,67.979338,103.18441,29.416828,75.809007,-46.392179,2.262833,5.831462,-3.568629,9.681681,0.744745,347.608877,0.666667,6,0,0,1,4,0.333333,3,1,0.666667,0.8,0.777778,0.538462,0.00641,0.99359,0.461538,0.730769,0.538462,0.605128,0.782051,0.004,0.003,0,0.01,90597,29173,24357,?,?,?
+processed-weka.filters.unsupervised.attribute.NumericToNominal-Rfirst-last,2,weka.classifiers.bayes.NaiveBayes,'',5995231201785697655,20140417.0826,28,14,8,6,0,57.142857,42.857143,0,0.363636,0.067414,0.220932,59.452074,97.435753,34.275646,46.727112,-12.451466,2.44826,3.337651,-0.88939,9.426617,0.67333,344.629472,0.777778,7,0,0,1,5,0.222222,2,1,0.777778,0.875,0.977778,0.571429,0,1,0.428571,0.714286,0.571429,0.633929,0.941758,0.001,0.005,0,0.01,90597,28872,24658,?,?,?
+processed-weka.filters.unsupervised.attribute.NumericToNominal-Rfirst-last,3,weka.classifiers.bayes.NaiveBayes,'',5995231201785697655,20140417.0826,30,12,10,2,0,83.333333,16.666667,0,0.54717,0.023826,0.115469,22.586564,57.588951,21.008559,10.111959,10.8966,1.750713,0.842663,0.90805,14.033349,1.169446,480.500912,0.9,9,0,0,1,2,0.1,1,1,0.9,0.947368,1,0.833333,0,1,0.166667,0.916667,0.833333,0.872807,1,0.001,0.002,0,0,90597,29474,24056,?,?,?
+processed-weka.filters.unsupervised.attribute.NumericToNominal-Rfirst-last,4,weka.classifiers.bayes.NaiveBayes,'',5995231201785697655,20140417.0826,27,15,10,5,0,66.666667,33.333333,0,0.516129,0.057946,0.207187,50.469027,89.615319,36.879761,54.727807,-17.848046,2.458651,3.64852,-1.18987,16.551959,1.103464,605.189457,0.777778,7,0,0,1,6,0.222222,2,1,0.777778,0.875,0.888889,0.666667,0.010256,0.989744,0.333333,0.755556,0.666667,0.698333,0.9,0.002,0.001,0,0,90597,28571,24959,?,?,?
+processed-weka.filters.unsupervised.attribute.NumericToNominal-Rfirst-last,5,weka.classifiers.bayes.NaiveBayes,'',5995231201785697655,20140417.0826,28,14,11,3,0,78.571429,21.428571,0,0.644068,0.037438,0.158078,33.190129,70.339482,32.105721,36.566454,-4.460733,2.293266,2.61189,-0.318624,19.157543,1.368396,687.81134,0.888889,8,0,0,1,5,0.111111,1,1,0.888889,0.941176,0.933333,0.785714,0.005495,0.994505,0.214286,0.821429,0.785714,0.795518,0.940659,0.002,0.001,0,0,90597,28872,24658,?,?,?
+processed-weka.filters.unsupervised.attribute.NumericToNominal-Rfirst-last,6,weka.classifiers.bayes.NaiveBayes,'',5995231201785697655,20140417.0826,30,12,11,1,0,91.666667,8.333333,0,0.803279,0.026484,0.113371,24.566836,54.029791,23.476461,10.383308,13.093154,1.956372,0.865276,1.091096,16.238252,1.353188,569.44586,1,9,0,0,1,3,0,0,1,1,1,1,0.916667,0,1,0.083333,0.916667,0.916667,0.916667,0.992424,0.001,0.001,0,0,90597,29474,24056,?,?,?
+processed-weka.filters.unsupervised.attribute.NumericToNominal-Rfirst-last,7,weka.classifiers.bayes.NaiveBayes,'',5995231201785697655,20140417.0826,24,18,10,8,0,55.555556,44.444444,0,0.409836,0.073816,0.238534,63.075924,100.163444,47.189475,92.439454,-45.249979,2.621638,5.135525,-2.513888,16.218229,0.901013,606.265236,0.7,7,0,0,1,8,0.3,3,1,0.7,0.823529,0.7875,0.555556,0.017157,0.982843,0.444444,0.638889,0.555556,0.568627,0.826389,0.001,0.001,0,0,90597,27668,25862,?,?,?
+processed-weka.filters.unsupervised.attribute.NumericToNominal-Rfirst-last,8,weka.classifiers.bayes.NaiveBayes,'',5995231201785697655,20140417.0826,27,15,10,5,0,66.666667,33.333333,0,0.5,0.058895,0.205626,51.168813,88.523481,38.049686,42.489968,-4.440282,2.536646,2.832665,-0.296019,14.757767,0.983851,545.96146,0.888889,8,0,0,1,6,0.111111,1,1,0.888889,0.941176,0.907407,0.666667,0.004762,0.995238,0.333333,0.7,0.666667,0.675817,0.915873,0.001,0.001,0,0,90597,28571,24959,?,?,?
+processed-weka.filters.unsupervised.attribute.NumericToNominal-Rfirst-last,9,weka.classifiers.bayes.NaiveBayes,'',5995231201785697655,20140417.0826,29,13,10,3,0,76.923077,23.076923,0,0.589474,0.041628,0.158259,37.606252,72.434634,28.416828,26.473045,1.943784,2.18591,2.036388,0.149522,15.991794,1.230138,570.395124,0.888889,8,0,0,1,4,0.111111,1,1,0.888889,0.941176,0.944444,0.769231,0,1,0.230769,0.846154,0.769231,0.80543,0.948718,0,0.001,0,0,90597,29173,24357,?,?,?
+processed-weka.filters.unsupervised.attribute.NumericToNominal-Rfirst-last,10,weka.classifiers.bayes.NaiveBayes,'',5995231201785697655,20140417.0826,27,15,8,7,0,53.333333,46.666667,0,0.375,0.085138,0.243685,73.969121,104.908377,38.049686,72.858308,-34.808622,2.536646,4.857221,-2.320575,10.952183,0.730146,405.174425,0.666667,6,0,0,1,6,0.333333,3,1,0.666667,0.8,0.814815,0.533333,0.004762,0.995238,0.466667,0.7,0.533333,0.591111,0.84127,0,0.001,0,0,90597,28571,24959,?,?,?
+processed-weka.filters.unsupervised.attribute.NumericToNominal-Rfirst-last,1,weka.classifiers.functions.SimpleLogistic,'-I 0 -M 500 -H 50 -W 0.0',7397710626304705059,20140417.0826,29,13,10,3,0,76.923077,23.076923,0,0.35,0.08526,0.184238,76.805833,83.963894,29.416828,20.709174,8.707654,2.262833,1.593013,0.66982,10.646207,0.818939,382.239005,1,9,0.75,3,0.25,1,0,0,0.75,1,0.857143,0.875,0.769231,0.519231,0.480769,0.230769,0.596154,0.769231,0.67033,0.865385,0.673,0.001,0.65,0,405950,29173,24357,?,1.554404,1
+processed-weka.filters.unsupervised.attribute.NumericToNominal-Rfirst-last,2,weka.classifiers.functions.SimpleLogistic,'-I 0 -M 500 -H 50 -W 0.0',7397710626304705059,20140417.0826,28,14,10,4,0,71.428571,28.571429,0,0.356322,0.08054,0.195977,71.02738,86.430335,34.275646,25.489395,8.78625,2.44826,1.820671,0.627589,9.857632,0.704117,360.387029,1,9,0.6,3,0.4,2,0,0,0.75,1,0.857143,0.833333,0.714286,0.385714,0.614286,0.285714,0.553571,0.714286,0.622449,0.769231,0.582,0,0.57,0,396612,28872,24658,?,1.381693,1
+processed-weka.filters.unsupervised.attribute.NumericToNominal-Rfirst-last,3,weka.classifiers.functions.SimpleLogistic,'-I 0 -M 500 -H 50 -W 0.0',7397710626304705059,20140417.0826,30,12,11,1,0,91.666667,8.333333,0,0.636364,0.024787,0.102601,23.497531,51.171231,21.008559,6.412601,14.595958,1.750713,0.534383,1.21633,14.595958,1.21633,499.764612,1,10,0.5,1,0.5,1,0,0,0.909091,1,0.952381,1,0.916667,0.416667,0.583333,0.083333,0.840909,0.916667,0.876984,1,0.581,0,0.57,0,415684,29474,24056,?,2.072539,2
+processed-weka.filters.unsupervised.attribute.NumericToNominal-Rfirst-last,4,weka.classifiers.functions.SimpleLogistic,'-I 0 -M 500 -H 50 -W 0.0',7397710626304705059,20140417.0826,27,15,11,4,0,73.333333,26.666667,0,0.423077,0.045365,0.185146,39.511549,80.081856,36.879761,22.329004,14.550757,2.458651,1.4886,0.97005,16.428503,1.095234,600.675535,1,9,0.666667,4,0.333333,2,0,0,0.692308,1,0.818182,1,0.733333,0.4,0.6,0.266667,0.548718,0.733333,0.624242,0.971429,0.578,0,0.57,0,388066,28571,24959,?,1.727116,3
+processed-weka.filters.unsupervised.attribute.NumericToNominal-Rfirst-last,5,weka.classifiers.functions.SimpleLogistic,'-I 0 -M 500 -H 50 -W 0.0',7397710626304705059,20140417.0826,28,14,9,5,0,64.285714,35.714286,0,0,0.152778,0.276385,135.444151,122.982641,32.105721,50.189475,-18.083754,2.293266,3.584963,-1.291697,-2.721815,-0.194415,-97.721056,1,9,1,5,0,0,0,0,0.642857,1,0.782609,0.5,0.642857,0.642857,0.357143,0.357143,0.413265,0.642857,0.503106,0.5,0.531,0,0.52,0,396046,28872,24658,?,0,0
+processed-weka.filters.unsupervised.attribute.NumericToNominal-Rfirst-last,6,weka.classifiers.functions.SimpleLogistic,'-I 0 -M 500 -H 50 -W 0.0',7397710626304705059,20140417.0826,30,12,10,2,0,83.333333,16.666667,0,0.454545,0.027771,0.166398,25.760267,79.301187,23.476461,23.705732,-0.22927,1.956372,1.975478,-0.019106,13.587411,1.132284,476.485734,1,9,0.666667,2,0.333333,1,0,0,0.818182,1,0.9,1,0.833333,0.5,0.5,0.166667,0.69697,0.833333,0.758333,0.992424,0.674,0,0.6,0,418852,29474,24056,?,2.072539,10
+processed-weka.filters.unsupervised.attribute.NumericToNominal-Rfirst-last,7,weka.classifiers.functions.SimpleLogistic,'-I 0 -M 500 -H 50 -W 0.0',7397710626304705059,20140417.0826,24,18,10,8,0,55.555556,44.444444,0,0,0.152778,0.276385,130.549451,116.057691,47.189475,64.529325,-17.33985,2.621638,3.584963,-0.963325,-0.234916,-0.013051,-8.78157,1,10,1,8,0,0,0,0,0.555556,1,0.714286,0.5,0.555556,0.555556,0.444444,0.444444,0.308642,0.555556,0.396825,0.5,0.461,0,0.46,0,358694,27668,25862,?,0,0
+processed-weka.filters.unsupervised.attribute.NumericToNominal-Rfirst-last,8,weka.classifiers.functions.SimpleLogistic,'-I 0 -M 500 -H 50 -W 0.0',7397710626304705059,20140417.0826,27,15,10,5,0,66.666667,33.333333,0,0.234694,0.081399,0.21447,70.72061,92.330998,38.049686,31.386223,6.663463,2.536646,2.092415,0.444231,8.526435,0.568429,315.434244,1,9,0.833333,5,0.166667,1,0,0,0.642857,1,0.782609,0.583333,0.666667,0.5,0.5,0.333333,0.452381,0.666667,0.536232,0.595238,0.52,0,0.5,0,387274,28571,24959,?,1.381693,1
+processed-weka.filters.unsupervised.attribute.NumericToNominal-Rfirst-last,9,weka.classifiers.functions.SimpleLogistic,'-I 0 -M 500 -H 50 -W 0.0',7397710626304705059,20140417.0826,29,13,10,3,0,76.923077,23.076923,0,0.35,0.070754,0.183115,63.918169,83.81144,28.416828,20.455767,7.961061,2.18591,1.573521,0.612389,8.975678,0.690437,320.144381,1,9,0.75,3,0.25,1,0,0,0.75,1,0.857143,0.625,0.769231,0.519231,0.480769,0.230769,0.596154,0.769231,0.67033,0.634615,0.552,0,0.54,0,405950,29173,24357,?,1.727116,1
+processed-weka.filters.unsupervised.attribute.NumericToNominal-Rfirst-last,10,weka.classifiers.functions.SimpleLogistic,'-I 0 -M 500 -H 50 -W 0.0',7397710626304705059,20140417.0826,27,15,9,6,0,60,40,0,0,0.093872,0.202498,81.557199,87.177041,38.049686,28.104628,9.945058,2.536646,1.873642,0.663004,10.368966,0.691264,383.59838,1,9,1,6,0,0,0,0,0.6,1,0.75,0.805556,0.6,0.6,0.4,0.4,0.36,0.6,0.45,0.8,0.531,0,0.52,0,387274,28571,24959,?,1.381693,1

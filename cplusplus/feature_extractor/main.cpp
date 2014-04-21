@@ -310,7 +310,7 @@ int write(const vector<T> &data)
     //typename vector<T>::iterator iter;
     for (size_t i=0; i<data.size(); i++)
     {
-        outfile << data[i] << " ";
+        outfile << " "<<data[i] ;
     }
     outfile.close();
     return 0;
@@ -328,6 +328,8 @@ void feature_extractor(flow f)
     vector<string> timeintervals;
     vector<int> lens;
     vector<string> features;
+    //使用五元组表示这个流
+    vector<string> tuple;
     char buffer[50];
 
     flow::iterator iter;
@@ -363,15 +365,25 @@ void feature_extractor(flow f)
         if(ip.get_protocal() == IPPROTO_TCP)
         {
             Packet_tcp tcp = p.TCP();
-            sprintf(buffer,"%s %s %hu %hu %zu",
+            if(iter == f.begin()) {
+                sprintf(buffer,"%s %hu %s %hu %d",
                     sip.c_str(),
-                    dip.c_str(),
                     tcp.sport(),
+                    dip.c_str(),
                     tcp.dport(),
-                    tcp.payload_length());
-            features.push_back(buffer);
-            cout << buffer <<endl;
+                    IPPROTO_TCP);
+                tuple.push_back(buffer);
 
+                sprintf(buffer,"%zu",
+                    tcp.payload_length());
+                features.push_back(buffer);
+            } else {
+                // 感觉这个就够了。
+                sprintf(buffer,"%zu",
+                    tcp.payload_length());
+                features.push_back(buffer);
+            }
+            cout << buffer <<endl;
         }
         else if (ip.get_protocal() == IPPROTO_UDP)
         {
@@ -381,15 +393,16 @@ void feature_extractor(flow f)
         }
 
     }
+    write(tuple);
     write(timeintervals);
     write(lens);
     write(features);
 
-    //输出换行符
-    fstream outfile;
+    ofstream outfile;
     outfile.open("features.txt",ofstream::out | ofstream::app);
-    outfile<<endl;
+    outfile << endl;
     outfile.close();
+
 }
 
 int run(int argc, char **argv)
@@ -511,7 +524,6 @@ int preprocess(int argc,char **argv)
                     flowpool.erase(iter);
                     //开始检查下一个流。
                 }
-
             }
             break;
         }

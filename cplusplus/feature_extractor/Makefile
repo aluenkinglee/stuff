@@ -6,10 +6,10 @@ OPT = -O2
 CXXFLAGS =  $(DEBUG)   $(OPT)
 
 out=main
-obj=pcap_throughput.o
-all: pcap_throughput
+obj=main.o
+all: main
 
-pcap_throughput: pcap_throughput.cpp
+main: main.cpp
 	$(CXX) $(CXXFLAGS) -g -c $< $(LIB_FLAGS)
 $(out):$(obj)
 	$(CXX) $(CXXFLAGS) -g -o $(out) $(obj) $(LIB_FLAGS)

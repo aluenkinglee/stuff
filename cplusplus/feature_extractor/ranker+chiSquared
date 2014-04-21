@@ -1,0 +1,92 @@
+=== Run information ===
+
+Evaluator:    weka.attributeSelection.ChiSquaredAttributeEval 
+Search:weka.attributeSelection.Ranker -T -1.7976931348623157E308 -N -1
+Relation:     processed-weka.filters.unsupervised.attribute.AddCluster-Wweka.clusterers.SimpleKMeans -N 12 -A "weka.core.EuclideanDistance -R first-last" -I 500 -S 10
+Instances:    42
+Attributes:   35
+              sip
+              sport
+              dip
+              dport
+              protocal
+              interval1
+              interval2
+              interval3
+              interval4
+              interval5
+              interval6
+              interval7
+              interval8
+              interval9
+              packet_len1
+              packet_len2
+              packet_len3
+              packet_len4
+              packet_len5
+              packet_len6
+              packet_len7
+              packet_len8
+              packet_len9
+              packet_len10
+              payload_len1
+              payload_len2
+              payload_len3
+              payload_len4
+              payload_len5
+              payload_len6
+              payload_len7
+              payload_len8
+              payload_len9
+              payload_len10
+              cluster
+Evaluation mode:evaluate on all training data
+
+
+
+=== Attribute Selection on all input data ===
+
+Search Method:
+	Attribute ranking.
+
+Attribute Evaluator (supervised, Class (nominal): 35 cluster):
+	Chi-squared Ranking Filter
+
+Ranked attributes:
+157.0864   12 interval7
+145.6184   22 packet_len8
+130.1739   20 packet_len6
+123.7833    6 interval1
+123.0833    9 interval4
+118.16     32 payload_len8
+108.7528   34 payload_len10
+108.5061   24 packet_len10
+103.1333   18 packet_len4
+ 92.3818   11 interval6
+ 85.5423   23 packet_len9
+ 81.0409   19 packet_len5
+ 61.9733   28 payload_len4
+ 42        31 payload_len7
+ 42        29 payload_len5
+ 42        30 payload_len6
+ 42        21 packet_len7
+ 39.4135   16 packet_len2
+ 39.4135   17 packet_len3
+ 38.4      14 interval9
+ 37.9167    2 sport
+ 36.9542    3 dip
+ 33.9      10 interval5
+  0         5 protocal
+  0        33 payload_len9
+  0         4 dport
+  0         1 sip
+  0        25 payload_len1
+  0        15 packet_len1
+  0        13 interval8
+  0         8 interval3
+  0         7 interval2
+  0        26 payload_len2
+  0        27 payload_len3
+
+Selected attributes: 12,22,20,6,9,32,34,24,18,11,23,19,28,31,29,30,21,16,17,14,2,3,10,5,33,4,1,25,15,13,8,7,26,27 : 34
+
