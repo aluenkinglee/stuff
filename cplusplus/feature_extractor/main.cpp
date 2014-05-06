@@ -198,8 +198,9 @@ public:
 };
 
 Flows flowpool;
-void feature_extractor(flow f);
+void feature_extractor(flow &f, char* filename="features.txt");
 
+/*
 void loop_callback(u_char *args, const struct pcap_pkthdr *header, const u_char *packet)
 {
     static int count = 0;                           //包计数器
@@ -213,11 +214,9 @@ void loop_callback(u_char *args, const struct pcap_pkthdr *header, const u_char 
     count++;
 
     Packet p(header,packet);
-    /* IP头 */
+    /// IP头
     Packet_ip iptest =p.IP();
     size_ip = iptest.size();
-
-    //ip = (struct packet_ip*)(packet + SIZE_ETHERNET);
 
     if (size_ip < 20)
     {
@@ -229,7 +228,7 @@ void loop_callback(u_char *args, const struct pcap_pkthdr *header, const u_char 
     {
     case IPPROTO_TCP:
     {
-        /* TCP头 */
+        /// TCP头
         Packet_tcp tcptest = p.TCP();
         size_tcp = tcptest.size();
         if (size_tcp < 20)
@@ -302,11 +301,29 @@ void loop_callback(u_char *args, const struct pcap_pkthdr *header, const u_char 
     }
     }
 }
+*/
+/*
+/// 把数据写到一个文件里。
 template <typename T>
 int write(const vector<T> &data)
 {
+   ofstream outfile;
+   outfile.open("features.txt",ofstream::out | ofstream::app);
+   //typename vector<T>::iterator iter;
+   for (size_t i=0; i<data.size(); i++)
+   {
+       outfile << " "<<data[i] ;
+   }
+   outfile.close();
+   return 0;
+}
+*/
+/// 把特征向量写到指定文件
+template <typename T>
+int write(const vector<T> &data, char * filename="features.txt")
+{
     ofstream outfile;
-    outfile.open("features.txt",ofstream::out | ofstream::app);
+    outfile.open(filename, ofstream::out | ofstream::app);
     //typename vector<T>::iterator iter;
     for (size_t i=0; i<data.size(); i++)
     {
@@ -318,7 +335,7 @@ int write(const vector<T> &data)
 
 double time_diff(struct timeval x , struct timeval y);
 
-void feature_extractor(flow f)
+void feature_extractor(flow &f, char* filename)
 {
     struct pcap_pkthdr header; // The header that pcap gives us
 
@@ -333,7 +350,10 @@ void feature_extractor(flow f)
     char buffer[50];
 
     flow::iterator iter;
+
+#ifdef DEBUG
     cout << "f size:"<<f.size()<<"...."<<endl;
+#endif
     for(iter = f.begin(); iter != f.end();
             ++iter)
     {
@@ -351,7 +371,9 @@ void feature_extractor(flow f)
             cur_ts = header.ts;   //update time interval
             //printf("%.6lf\n", time_diff(pre_ts,cur_ts));
             sprintf(buffer,"%.6lf ", time_diff(pre_ts,cur_ts));
+#ifdef DEBUG
             cout << buffer <<" " ;
+#endif
             timeintervals.push_back(buffer);
         }
         // 包的长度。
@@ -365,25 +387,31 @@ void feature_extractor(flow f)
         if(ip.get_protocal() == IPPROTO_TCP)
         {
             Packet_tcp tcp = p.TCP();
-            if(iter == f.begin()) {
+            if(iter == f.begin())
+            {
                 sprintf(buffer,"%s %hu %s %hu %d",
-                    sip.c_str(),
-                    tcp.sport(),
-                    dip.c_str(),
-                    tcp.dport(),
-                    IPPROTO_TCP);
+                        sip.c_str(),
+                        tcp.sport(),
+                        dip.c_str(),
+                        tcp.dport(),
+                        IPPROTO_TCP);
                 tuple.push_back(buffer);
 
                 sprintf(buffer,"%zu",
-                    tcp.payload_length());
-                features.push_back(buffer);
-            } else {
-                // 感觉这个就够了。
-                sprintf(buffer,"%zu",
-                    tcp.payload_length());
+                        tcp.payload_length());
                 features.push_back(buffer);
             }
+            else
+            {
+                // 感觉这个就够了。
+                sprintf(buffer,"%zu",
+                        tcp.payload_length());
+                features.push_back(buffer);
+            }
+
+#ifdef DEBUG
             cout << buffer <<endl;
+#endif
         }
         else if (ip.get_protocal() == IPPROTO_UDP)
         {
@@ -393,18 +421,21 @@ void feature_extractor(flow f)
         }
 
     }
-    write(tuple);
-    write(timeintervals);
-    write(lens);
-    write(features);
+
+    cout << "filename is:"<<filename<<endl;
+    write(tuple, filename);
+    write(timeintervals, filename);
+    write(lens, filename);
+    write(features, filename);
 
     ofstream outfile;
-    outfile.open("features.txt",ofstream::out | ofstream::app);
+    outfile.open(filename, ofstream::out | ofstream::app);
     outfile << endl;
     outfile.close();
 
 }
 
+/*
 int run(int argc, char **argv)
 {
     //open the pcap file
@@ -416,10 +447,11 @@ int run(int argc, char **argv)
         fprintf(stderr, "Usage: %s [input pcaps]\n", argv[0]);
         exit(1);
     }
-    handle = pcap_open_offline(argv[1], errbuf);   //call pcap library function
+    char* input = argv[1];
+    handle = pcap_open_offline(input, errbuf);   //call pcap library function
     if (handle == NULL)
     {
-        fprintf(stderr,"Couldn't open pcap file %s: %s\n", argv[1], errbuf);
+        fprintf(stderr,"Couldn't open pcap file %s: %s\n", input, errbuf);
         return(2);
     }
     pcap_loop( handle, 30, loop_callback, NULL);
@@ -427,6 +459,8 @@ int run(int argc, char **argv)
 
     return 0; //done
 } //end of main() function
+*/
+
 
 int preprocess(int argc,char **argv)
 {
@@ -437,40 +471,41 @@ int preprocess(int argc,char **argv)
     int size_ip;
     int size_tcp;
 
-    if (argc < 2)
+    if (argc < 3)
     {
 
-        fprintf(stderr, "Usage: %s [input pcaps]\n", argv[0]);
+        fprintf(stderr, "Usage: %s [input pcaps] [output filename]\n", argv[0]);
         exit(1);
     }
-    // Begin Main Packet Processing Loop
-    // loop through each pcap file in command line args
 
     pcap_t *handle;
     char errbuf[PCAP_ERRBUF_SIZE];
     // open the pcap file
-    handle = pcap_open_offline(argv[1], errbuf);
+    char *input = argv[1];
+    char *filename = argv[2];
+    cout << "filename :"<<filename<<"\t"<<"input file :"<<input<<endl;
+    handle = pcap_open_offline(input, errbuf);
 
     if (handle == NULL)
     {
-        fprintf(stderr,"Couldn't open pcap file %s: %s\n", argv[1], errbuf);
+        fprintf(stderr,"Couldn't open pcap file %s: %s\n", input, errbuf);
         return(1);
     }
 
     // begin processing the packets in this particular file
     // one at a time
-    while (packet = pcap_next(handle,&header))
+    while ((packet = pcap_next(handle,&header))!=NULL)
     {
         Packet p(&header,packet);
-        /* IP头 */
+        /// IP头
         Packet_ip iptest =p.IP();
         size_ip = iptest.size();
 
-        //ip = (struct packet_ip*)(packet + SIZE_ETHERNET);
-
         if (size_ip < 20)
         {
+#ifdef DEBUG
             printf("无效的IP头长度: %u bytes\n", size_ip);
+#endif
             continue;
         }
 
@@ -478,19 +513,24 @@ int preprocess(int argc,char **argv)
         {
         case IPPROTO_TCP:
         {
-            /* TCP头 */
+            /// TCP头
             Packet_tcp tcptest = p.TCP();
             size_tcp = tcptest.size();
             if (size_tcp < 20)
             {
+
+#ifdef DEBUG
                 //printf("无效的TCP头长度: %u bytes\n", size_tcp);
+#endif
                 continue;
             }
 
             flow f(iptest.source_ip(), tcptest.sport(),
                    iptest.dest_ip(), tcptest.dport());
 
-            cout << "flowpool的大小:"<<flowpool.size() << endl;
+#ifdef DEBUG
+            ///cout << "flowpool的大小:"<<flowpool.size() << endl;
+#endif
             //判断该流是否是一个心底的流？
             //说起新的流，必须还得检查它是有SYN等标志，才可以确定可以加入。
             //否则，pass 掉
@@ -502,7 +542,10 @@ int preprocess(int argc,char **argv)
                 if(Dissector::is_tcp_new(p.TCP().get_flags()))
                 {
                     f.push_back(p);
-                    cout <<"目前的该流的大小："<<f.size()<<endl;
+
+#ifdef DEBUG
+                    ///cout <<"目前的该流的大小："<<f.size()<<endl;
+#endif
                     flowpool.push_back(f);
                     //开始下一个包。
                 }
@@ -515,12 +558,15 @@ int preprocess(int argc,char **argv)
                 if((*iter).size()<10)
                 {
                     iter->push_back(p);
-                    cout <<"目前的该流的大小："<<(*iter).size()<<endl;
+
+#ifdef DEBUG
+                    /// cout <<"目前的该流的大小："<<(*iter).size()<<endl;
+#endif
                 }
                 else
                 {
                     //提取大小为10的流的特征向量。
-                    feature_extractor(*iter);
+                    feature_extractor(*iter, filename);
                     flowpool.erase(iter);
                     //开始检查下一个流。
                 }
@@ -535,10 +581,11 @@ int preprocess(int argc,char **argv)
             int sport =  ntohs(udp->uh_sport);
             int dport =  ntohs(udp->uh_dport);
 
+#ifdef DEBUG
             printf("%s:%d -> ", iptest.source_ip(), sport);
             printf("%s:%d ", iptest.dest_ip(), dport);
             printf("%lu %d\n",iptest.get_protocal(), udp->uh_len);
-
+#endif
             break;
         }
 
