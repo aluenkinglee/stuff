@@ -29,7 +29,7 @@ public:
     {
         in.open("features.txt", ios::in);
         //重新建立文件 原来的销毁。
-        out.open("processed.arff", ios::out);
+        out.open("features.arff", ios::out);
         tuple.resize(tuple_SIZE);
         timeintervals.resize(timeintervals_SIZE);
         lens.resize(lens_SIZE);

@@ -10,3 +10,187 @@ k=1-15的值。
 EM
 最大似然估计
 [-21.0054, -4.90968, 2.3970, 5.87077, 11.8336, 16.718, 19.238, 17.642, 16.001, 23.547, 24.343, 24.955, 20.631, 20.931, 20.336]
+
+
+
+处理了260MB的网络数据，得到了2490个特征流，对其进行特征处理，选用kmeans对其进行大概分类得到40个类
+对其进行特征选择，结果如下：
+=== Run information ===
+
+Evaluator:    weka.attributeSelection.CfsSubsetEval 
+Search:weka.attributeSelection.BestFirst -D 1 -N 5
+Relation:     processed-weka.filters.AllFilter-weka.filters.MultiFilter-Fweka.filters.AllFilter-weka.filters.unsupervised.attribute.AddCluster-Wweka.clusterers.SimpleKMeans -N 40 -A "weka.core.EuclideanDistance -R first-last" -I 500 -S 10
+Instances:    2411
+Attributes:   35
+              sip
+              sport
+              dip
+              dport
+              protocal
+              interval1
+              interval2
+              interval3
+              interval4
+              interval5
+              interval6
+              interval7
+              interval8
+              interval9
+              packet_len1
+              packet_len2
+              packet_len3
+              packet_len4
+              packet_len5
+              packet_len6
+              packet_len7
+              packet_len8
+              packet_len9
+              packet_len10
+              payload_len1
+              payload_len2
+              payload_len3
+              payload_len4
+              payload_len5
+              payload_len6
+              payload_len7
+              payload_len8
+              payload_len9
+              payload_len10
+              cluster
+Evaluation mode:evaluate on all training data
+
+
+
+=== Attribute Selection on all input data ===
+
+Search Method:
+	Best first.
+	Start set: no attributes
+	Search direction: forward
+	Stale search after 5 node expansions
+	Total number of subsets evaluated: 547
+	Merit of best subset found:    0.739
+
+Attribute Subset Evaluator (supervised, Class (nominal): 35 cluster):
+	CFS Subset Evaluator
+	Including locally predictive attributes
+
+Selected attributes: 2,3,10,11,12,13,14,15,18,20,21,22,23,24,28,29,31,32,33,34 : 20
+                     sport
+                     dip
+                     interval5
+                     interval6
+                     interval7
+                     interval8
+                     interval9
+                     packet_len1
+                     packet_len4
+                     packet_len6
+                     packet_len7
+                     packet_len8
+                     packet_len9
+                     packet_len10
+                     payload_len4
+                     payload_len5
+                     payload_len7
+                     payload_len8
+                     payload_len9
+                     payload_len10
+
+/////////////////////
+=== Run information ===
+
+Evaluator:    weka.attributeSelection.InfoGainAttributeEval 
+Search:weka.attributeSelection.Ranker -T -1.7976931348623157E308 -N -1
+Relation:     processed-weka.filters.AllFilter-weka.filters.MultiFilter-Fweka.filters.AllFilter-weka.filters.unsupervised.attribute.AddCluster-Wweka.clusterers.SimpleKMeans -N 40 -A "weka.core.EuclideanDistance -R first-last" -I 500 -S 10
+Instances:    2411
+Attributes:   35
+              sip
+              sport
+              dip
+              dport
+              protocal
+              interval1
+              interval2
+              interval3
+              interval4
+              interval5
+              interval6
+              interval7
+              interval8
+              interval9
+              packet_len1
+              packet_len2
+              packet_len3
+              packet_len4
+              packet_len5
+              packet_len6
+              packet_len7
+              packet_len8
+              packet_len9
+              packet_len10
+              payload_len1
+              payload_len2
+              payload_len3
+              payload_len4
+              payload_len5
+              payload_len6
+              payload_len7
+              payload_len8
+              payload_len9
+              payload_len10
+              cluster
+Evaluation mode:evaluate on all training data
+
+
+
+=== Attribute Selection on all input data ===
+
+Search Method:
+	Attribute ranking.
+
+Attribute Evaluator (supervised, Class (nominal): 35 cluster):
+	Information Gain Ranking Filter
+
+Ranked attributes:
+ 2.6707    3 dip
+ 1.9459   20 packet_len6
+ 1.9304   18 packet_len4
+ 1.8726   30 payload_len6
+ 1.8671   28 payload_len4
+ 1.7345   22 packet_len8
+ 1.6374   21 packet_len7
+ 1.6282   32 payload_len8
+ 1.5846    2 sport
+ 1.5016   31 payload_len7
+ 1.3457   23 packet_len9
+ 1.2893   14 interval9
+ 1.2505   12 interval7
+ 1.2185   19 packet_len5
+ 1.1894   24 packet_len10
+ 1.1588   33 payload_len9
+ 1.1049    9 interval4
+ 1.0755   11 interval6
+ 1.0639   34 payload_len10
+ 1.0162   13 interval8
+ 0.8982    6 interval1
+ 0.7743    7 interval2
+ 0.7704    1 sip
+ 0.7675   16 packet_len2
+ 0.7554   15 packet_len1
+ 0.6521   10 interval5
+ 0.5699    8 interval3
+ 0.4955   29 payload_len5
+ 0.2472    4 dport
+ 0.2428   17 packet_len3
+ 0        26 payload_len2
+ 0        27 payload_len3
+ 0         5 protocal
+ 0        25 payload_len1
+
+Selected attributes: 3,20,18,30,28,22,21,32,2,31,23,14,12,19,24,33,9,11,34,13,6,7,1,16,15,10,8,29,4,17,26,27,5,25 : 34
+
+接下来，
+需要看分类器相关
+标注集里需要添加一栏appname的属性
+需要自动确定一个应用的k的大小 （已完成）

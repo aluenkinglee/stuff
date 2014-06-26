@@ -19,7 +19,7 @@
 #include "macro.h"
 #include "dissector.h"
 #include "Packet.h"
-
+#define DEBUG
 using namespace std;
 typedef class Packet
 {
@@ -320,7 +320,7 @@ int write(const vector<T> &data)
 */
 /// 把特征向量写到指定文件
 template <typename T>
-int write(const vector<T> &data, char * filename="features.txt")
+int write(const vector<T> &data, const char * filename="features.txt")
 {
     ofstream outfile;
     outfile.open(filename, ofstream::out | ofstream::app);
@@ -335,7 +335,7 @@ int write(const vector<T> &data, char * filename="features.txt")
 
 double time_diff(struct timeval x , struct timeval y);
 
-void feature_extractor(flow &f, char* filename)
+void feature_extractor(flow &f, const char* filename)
 {
     struct pcap_pkthdr header; // The header that pcap gives us
 
@@ -461,6 +461,24 @@ int run(int argc, char **argv)
 } //end of main() function
 */
 
+void split(const string& src, const string& delim, vector<string>& dest)
+{
+    string str = src;
+    string::size_type start = 0, index;
+    string substr;
+
+    index = str.find_first_of(delim, start);
+    while(index != string::npos)
+    {
+        substr = str.substr(start, index-start);
+        dest.push_back(substr);
+        start = str.find_first_not_of(delim, index);
+        if(start == string::npos) return;
+        index = str.find_first_of(delim, start);
+    }
+    substr = str.substr(start);
+    dest.push_back(substr);
+}
 
 int preprocess(int argc,char **argv)
 {
@@ -474,7 +492,7 @@ int preprocess(int argc,char **argv)
     if (argc < 3)
     {
 
-        fprintf(stderr, "Usage: %s [input pcaps] [output filename]\n", argv[0]);
+        fprintf(stderr, "Usage: %s [input pcaps] [output file]\n", argv[0]);
         exit(1);
     }
 
@@ -482,7 +500,11 @@ int preprocess(int argc,char **argv)
     char errbuf[PCAP_ERRBUF_SIZE];
     // open the pcap file
     char *input = argv[1];
-    char *filename = argv[2];
+    //vector<string> filenames;
+    //split(argv[1],".", filenames);
+    //filenames[0] = filenames[0]+".txt";
+    //const char* filename = filenames[0].c_str();
+    const char* filename = argv[2];
     cout << "filename :"<<filename<<"\t"<<"input file :"<<input<<endl;
     handle = pcap_open_offline(input, errbuf);
 
@@ -558,7 +580,6 @@ int preprocess(int argc,char **argv)
                 if((*iter).size()<10)
                 {
                     iter->push_back(p);
-
 #ifdef DEBUG
                     /// cout <<"目前的该流的大小："<<(*iter).size()<<endl;
 #endif
@@ -566,6 +587,7 @@ int preprocess(int argc,char **argv)
                 else
                 {
                     //提取大小为10的流的特征向量。
+                    cout << filename<<endl;
                     feature_extractor(*iter, filename);
                     flowpool.erase(iter);
                     //开始检查下一个流。
